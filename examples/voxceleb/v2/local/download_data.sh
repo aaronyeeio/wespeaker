@@ -22,21 +22,21 @@ download_dir=data/download_data
 
 if [ ! -f ${download_dir}/musan.tar.gz ]; then
   echo "Downloading musan.tar.gz ..."
-  wget --no-check-certificate https://openslr.elda.org/resources/17/musan.tar.gz -P ${download_dir}
+  aria2c --check-certificate=false --max-connection-per-server=8 --split=8 --dir=${download_dir} https://openslr.elda.org/resources/17/musan.tar.gz
   md5=$(md5sum ${download_dir}/musan.tar.gz | awk '{print $1}')
   [ $md5 != "0c472d4fc0c5141eca47ad1ffeb2a7df" ] && echo "Wrong md5sum of musan.tar.gz" && exit 1
 fi
 
 if [ ! -f ${download_dir}/rirs_noises.zip ]; then
   echo "Downloading rirs_noises.zip ..."
-  wget --no-check-certificate https://us.openslr.org/resources/28/rirs_noises.zip -P ${download_dir}
+  aria2c --check-certificate=false --max-connection-per-server=8 --split=8 --dir=${download_dir} https://us.openslr.org/resources/28/rirs_noises.zip
   md5=$(md5sum ${download_dir}/rirs_noises.zip | awk '{print $1}')
   [ $md5 != "e6f48e257286e05de56413b4779d8ffb" ] && echo "Wrong md5sum of rirs_noises.zip" && exit 1
 fi
 
 if [ ! -f ${download_dir}/vox1_test_wav.zip ]; then
   echo "Downloading vox1_test_wav.zip ..."
-  wget --no-check-certificate https://thor.robots.ox.ac.uk/~vgg/data/voxceleb/vox1a/vox1_test_wav.zip -P ${download_dir}
+  aria2c --check-certificate=false --max-connection-per-server=8 --split=8 --dir=${download_dir} https://www.modelscope.cn/datasets/juliuscn/voxceleb/resolve/master/vox1/vox1_test_wav.zip
   md5=$(md5sum ${download_dir}/vox1_test_wav.zip | awk '{print $1}')
   [ $md5 != "185fdc63c3c739954633d50379a3d102" ] && echo "Wrong md5sum of vox1_test_wav.zip" && exit 1
 fi
@@ -44,7 +44,7 @@ fi
 if [ ! -f ${download_dir}/vox1_dev_wav.zip ]; then
   echo "Downloading vox1_dev_wav.zip ..."
   for part in a b c d; do
-    wget --no-check-certificate https://thor.robots.ox.ac.uk/~vgg/data/voxceleb/vox1a/vox1_dev_wav_parta${part} -P ${download_dir} &
+    aria2c --check-certificate=false --max-connection-per-server=8 --split=8 --dir=${download_dir} https://www.modelscope.cn/datasets/juliuscn/voxceleb/resolve/master/vox1/vox1_dev_wav_parta${part} &
   done
   wait
   cat ${download_dir}/vox1_dev* >${download_dir}/vox1_dev_wav.zip
@@ -55,7 +55,7 @@ fi
 if [ ! -f ${download_dir}/vox2_aac.zip ]; then
   echo "Downloading vox2_aac.zip ..."
   for part in a b c d e f g h; do
-    wget --no-check-certificate https://thor.robots.ox.ac.uk/~vgg/data/voxceleb/vox1a/vox2_dev_aac_parta${part} -P ${download_dir} &
+    aria2c --check-certificate=false --max-connection-per-server=8 --split=8 --dir=${download_dir} https://www.modelscope.cn/datasets/juliuscn/voxceleb/resolve/master/vox2/vox2_dev_aac_parta${part} &
   done
   wait
   cat ${download_dir}/vox2_dev_aac* >${download_dir}/vox2_aac.zip
