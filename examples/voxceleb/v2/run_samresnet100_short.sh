@@ -18,9 +18,9 @@ job_id=2024
 data=data
 data_type="shard"  # shard/raw
 
-config=conf/samresnet100_projection.yaml
+config=conf/samresnet100_short.yaml
 exp_dir=exp/samresnet100_short
-gpus="[2,3,4,5,6]"
+gpus="[1,2,3,4,5,6]"
 num_avg=1
 checkpoint=exp/samresnet100_short/models/model_0.pt
 
