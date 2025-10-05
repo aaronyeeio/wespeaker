@@ -88,6 +88,8 @@ def train(config='conf/config.yaml', **kwargs):
             len(train_utt_spk_list), len(spk2id_dict)))
 
     # dataset and dataloader
+    batch_size = configs['dataloader_args']['batch_size']
+    configs['dataset_args']['batch_size'] = batch_size
     train_dataset = Dataset(configs['data_type'],
                             configs['train_data'],
                             configs['dataset_args'],
@@ -95,7 +97,6 @@ def train(config='conf/config.yaml', **kwargs):
                             reverb_lmdb_file=configs.get('reverb_data', None),
                             noise_lmdb_file=configs.get('noise_data', None))
     train_dataloader = DataLoader(train_dataset, **configs['dataloader_args'])
-    batch_size = configs['dataloader_args']['batch_size']
     if configs['dataset_args'].get('sample_num_per_epoch', 0) > 0:
         sample_num_per_epoch = configs['dataset_args']['sample_num_per_epoch']
     else:
@@ -126,6 +127,14 @@ def train(config='conf/config.yaml', **kwargs):
     if configs['model_init'] is not None:
         logger.info('Load initial model from {}'.format(configs['model_init']))
         load_checkpoint(model, configs['model_init'])
+        # Freeze backbone if specified
+        if configs.get('freeze_backbone', False):
+            logger.info('Freezing backbone parameters...')
+            for name, param in model.named_parameters():
+                param.requires_grad = False
+            if rank == 0:
+                logger.info(
+                    'Backbone frozen, only projection layer will be trained')
     elif checkpoint is None:
         logger.info('Train model from scratch ...')
     # projection layer
@@ -150,15 +159,24 @@ def train(config='conf/config.yaml', **kwargs):
         # !!!IMPORTANT!!!
         # Try to export the model by script, if fails, we should refine
         # the code to satisfy the script export requirements
-        if frontend_type == 'fbank':
-            script_model = torch.jit.script(model)
-            script_model.save(os.path.join(model_dir, 'init.zip'))
+        # if frontend_type == 'fbank':
+        #     script_model = torch.jit.script(model)
+        #     script_model.save(os.path.join(model_dir, 'init.zip'))
 
     # If specify checkpoint, load some info from checkpoint.
     # For checkpoint, frontend, speaker model, and projection layer
     # are all needed !!!
     if checkpoint is not None:
         load_checkpoint(model, checkpoint)
+        # Freeze backbone if specified (useful for fine-tuning projection layer only)
+        if configs.get('freeze_backbone', False):
+            logger.info('Freezing backbone parameters from checkpoint...')
+            for name, param in model.named_parameters():
+                if 'projection' not in name:  # Only freeze non-projection parameters
+                    param.requires_grad = False
+            if rank == 0:
+                logger.info(
+                    'Backbone frozen, only projection layer will be trained')
         start_epoch = int(re.findall(r"(?<=model_)\d*(?=.pt)",
                                      checkpoint)[0]) + 1
         logger.info('Load checkpoint: {}'.format(checkpoint))

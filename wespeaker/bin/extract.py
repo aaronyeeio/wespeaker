@@ -68,6 +68,7 @@ def extract(config='conf/config.yaml', **kwargs):
     test_conf['shuffle'] = False
     test_conf['aug_prob'] = configs.get('aug_prob', 0.0)
     test_conf['filter'] = False
+    test_conf['batch_size'] = batch_size
 
     dataset = Dataset(configs['data_type'],
                       configs['data_list'],

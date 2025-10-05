@@ -190,13 +190,15 @@ def Dataset(data_type,
 
     # spk2id
     dataset = Processor(dataset, processor.spk_to_id, spk2id_dict)
+    batch_size = configs.get('batch_size', 64)
 
     if data_type == 'feat':
         if not whole_utt:
             # random chunk
             chunk_len = num_frms = configs.get('num_frms', 200)
+            chunk_len_ratio = configs.get('num_frms_ratio', None)
             dataset = Processor(dataset, processor.random_chunk, chunk_len,
-                                'feat')
+                                'feat', chunk_len_ratio, batch_size)
     else:
         # resample
         resample_rate = configs.get('resample_rate', 16000)
@@ -209,12 +211,18 @@ def Dataset(data_type,
         if not whole_utt:
             # random chunk
             num_frms = configs.get('num_frms', 200)
+            num_frms_ratio = configs.get('num_frms_ratio', None)
             frame_shift = configs[frontend_args].get('frame_shift', 10)
             frame_length = configs[frontend_args].get('frame_length', 25)
-            chunk_len = ((num_frms - 1) * frame_shift +
-                         frame_length) * resample_rate // 1000
+            # Support multi num_frms: convert list to chunk_len list
+            if isinstance(num_frms, list):
+                chunk_len = [((nf - 1) * frame_shift + frame_length) *
+                             resample_rate // 1000 for nf in num_frms]
+            else:
+                chunk_len = ((num_frms - 1) * frame_shift +
+                             frame_length) * resample_rate // 1000
             dataset = Processor(dataset, processor.random_chunk, chunk_len,
-                                data_type)
+                                data_type, num_frms_ratio, batch_size)
         # add reverb & noise
         aug_prob = configs.get('aug_prob', 0.6)
         if (reverb_lmdb_file and noise_lmdb_file) and (aug_prob > 0.0):

@@ -368,28 +368,50 @@ def filter(data,
         yield sample
 
 
-def random_chunk(data, chunk_len, data_type='shard/raw/feat'):
+def random_chunk(data, chunk_len, data_type='shard/raw/feat', chunk_len_ratio=None, batch_size=64):
     """ Random chunk the data into chunk_len
 
         Args:
             data: Iterable[{key, wav/feat, label}]
-            chunk_len: chunk length for each sample
+            chunk_len: chunk length for each sample, can be int or list of int
+            data_type: type of data ('shard'/'raw'/'feat')
+            chunk_len_ratio: weight ratio for chunk_len list, if None, use uniform distribution
+            batch_size: number of samples in a batch, used to keep same chunk_len within a batch
 
         Returns:
             Iterable[{key, wav/feat, label}]
     """
+    cur_chunk_len = None
+    sample_count = 0
+
     for sample in data:
         assert 'key' in sample
+
+        # Select chunk_len at batch level to keep same length within a batch
+        if isinstance(chunk_len, list):
+            if sample_count % batch_size == 0:
+                # Select new chunk_len for the new batch
+                if chunk_len_ratio is not None:
+                    assert len(chunk_len) == len(chunk_len_ratio), \
+                        f"chunk_len and chunk_len_ratio must have same length, " \
+                        f"got {len(chunk_len)} and {len(chunk_len_ratio)}"
+                    cur_chunk_len = random.choices(
+                        chunk_len, weights=chunk_len_ratio, k=1)[0]
+                else:
+                    cur_chunk_len = random.choice(chunk_len)
+            sample_count += 1
+        else:
+            cur_chunk_len = chunk_len
 
         if data_type == 'feat':
             assert 'feat' in sample
             feat = sample['feat']
-            feat = get_random_chunk(feat, chunk_len)
+            feat = get_random_chunk(feat, cur_chunk_len)
             sample['feat'] = feat
         else:
             assert 'wav' in sample
             wav = sample['wav'][0]
-            wav = get_random_chunk(wav, chunk_len)
+            wav = get_random_chunk(wav, cur_chunk_len)
             sample['wav'] = wav.unsqueeze(0)
         yield sample
 
