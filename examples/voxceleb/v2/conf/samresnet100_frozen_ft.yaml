@@ -1,8 +1,5 @@
 ### train configuraton
 
-exp_dir: exp/samresnet100_frozen_ft
-gpus: "[2,3,4,5,6]"
-num_avg: 1
 enable_amp: True # whether enable automatic mixed precision training
 
 seed: 42
